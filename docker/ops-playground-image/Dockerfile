@@ -38,10 +38,14 @@ FROM flink:1.10.0-scala_2.11
 RUN apt-get update && \
     apt-get -y install curl python3 python3-distutils && \
     ln -s /usr/bin/python3 /usr/bin/python; 
-# install pyFlink
+# install pyFlink & kafka-python 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python ./get-pip.py
-RUN python -m pip install apache-flink
+RUN python -m pip install apache-flink kafka-python
+
+# to fix #1: Kafka connector not working for pylink
+# https://github.com/garyfeng/flink-playgrounds/issues/1
+COPY ./python/flink-connector-kafka-base_2.11-1.10.0.jar /usr/local/lib/python3.7/dist-packages/pyflink/lib/flink-connector-kafka-base_2.11-1.10.0.jar
 
 WORKDIR /opt/flink/bin
 
@@ -51,3 +55,7 @@ COPY --from=builder /opt/flink-playground-clickcountjob/target/flink-playground-
 # Copy pyflink word count example
 COPY ./python/WordCount.py WordCount.py
 COPY ./python/input.txt /tmp/input
+
+# Copy pyflink click count example
+COPY ./python/ClickEventGenerator.py ClickEventGenerator.py
+COPY ./python/ClickEventCount.py ClickEventCount.py
