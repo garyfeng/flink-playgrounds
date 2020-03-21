@@ -35,14 +35,20 @@ According to the above post, we need to reinstall `pyflink` from the above sourc
 
 ### Fixing JAR dependencies
 
-The following [Dockerfile_pylink_dep](Dockerfile_pylink_dep) fixed the above issue (https://github.com/garyfeng/flink-playgrounds/issues/1 as well as realted issues such as https://github.com/garyfeng/flink-playgrounds/issues/2) by copying in flink-connectors, flink-formats, and other missing JARs.
+It looks like the particular docker image we use do not have the required JAR files in the `FLINK_HOME` directory. The solution is to copy the right versions of the JAR files from the official release site.
 
-It requires a two-stage building strategy, where we first compile the flink system, including `flink-python`, then copy the JARs to the `flink-python`. The next stage starts with the official flink docker, install python, and the custom `pyflink` library from the previous step. 
-
-### Giving up for now
-This works, but then we run into additional java errors for creating a streaming table environment (https://github.com/garyfeng/flink-playgrounds/issues/3).
-
-It looks like the product is just not ready. 
+```dockerfile
+# to fix #1-3: various missing JAR for pylink
+# https://github.com/garyfeng/flink-playgrounds/issues/1
+WORKDIR /opt/flink/lib
+# copy required JARs to here
+RUN curl https://repo1.maven.org/maven2/org/apache/flink/flink-json/1.10.0/flink-json-1.10.0.jar \
+    -o flink-json-1.10.0.jar
+RUN curl https://repo1.maven.org/maven2/org/apache/flink/flink-connector-kafka-base_2.11/1.10.0/flink-connector-kafka-base_2.11-1.10.0.jar \
+    -o flink-connector-kafka-base_2.11-1.10.0.jar
+# This should be the default flink home
+# ENV FLINK_HOME /opt/flink    
+```
 
 ## Apache Beam
 
